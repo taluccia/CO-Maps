@@ -1,0 +1,154 @@
+---
+title: "Study Area Map"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+Imagery generated at https://code.earthengine.google.com/?scriptPath=users%2Factalucci%2FBoulder-LandUse%3ACO-StudyArea
+
+# Packages
+```{r message=FALSE, warning=FALSE}
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(DT)
+library(sf)
+library(ggmap) # devtools::install_github("dkahle/ggmap")
+library(ggrepel)
+library(RStoolbox)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(RColorBrewer)
+library(cowplot)
+library(ggspatial)
+library(maps)
+library(maptools)
+library(rgeos)
+library(sp)
+library(mapproj)
+```
+
+
+
+# Data
+
+## Raster
+```{r}
+image_stack <- stack("../data/raster/CO-Landsat-Image.tif")
+```
+
+```{r}
+extent(image_stack)
+```
+
+## Shapefiles
+```{r}
+cnty_all = st_read("../data/CountiesColorado/geo_export_0157f156-9909-4840-9dbd-5977cc5588c1.shp", "geo_export_0157f156-9909-4840-9dbd-5977cc5588c1") 
+```
+
+
+```{r}
+cnty = st_read("../data/County/SelectCounty.shp", "SelectCounty") 
+```
+
+```{r}
+r2 = mask(image_stack,cnty)
+plot(r2)
+```
+# Bounding Box
+```{r}
+(insetrect <- data.frame(xmin = 985362, xmax = 1069051,
+    ymin = 894097.7, ymax = 939814.2))
+```
+
+
+
+
+```{r}
+labs <- tibble(
+  long = c(-123.1207, -122.7497),
+  lat = c(49.2827, 53.9171),
+  names = c("Vancouver", "Prince George")) 
+```
+
+```{r}
+linecolors <- c("#714C02", "#01587A", "#024E37")
+fillcolors <- c("#9D6C06", "#077DAA", "#026D4E")
+```
+
+
+
+
+# Manuscript Figure
+
+## BC Map for inset
+```{r}
+map1 = ggplot() + 
+  geom_sf(data = cnty_all, fill = NA, color = "black", size = 1) +
+  
+  geom_sf(data = cnty, fill = NA, color = "#56B4E9", size = 1) +
+  xlab("")+ylab("")+
+  coord_sf() +
+   theme_void() +
+  # add a bounding box so that will border the inset
+  theme(panel.background = element_rect(colour = "black", fill = "white", size = 0.5))
+map1
+```
+
+# Map  with satelliite image
+class      : Extent 
+xmin       : 976470 
+xmax       : 1081530 
+ymin       : 880380 
+ymax       : 951870 
+
+```{r fig.height=6, fig.width=6}
+map2 =  ggplot() + 
+  ggRGB(r2, r=1, g=2, b=3, ggLayer = TRUE, coord_equal = TRUE) +
+  geom_sf(data = cnty, fill = NA, color = "#56B4E9", size = 1) +
+  
+      theme_void() +
+  
+  theme(plot.margin = unit(c(t = 0.2, r = 0.2, b = 0.2, l = 0.2), "cm")) +
+    theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "white")) +
+  theme(legend.position = "none") 
+
+
+map2
+```
+geom_segment(data =line1, aes(x = x1, y = y1, xend = x2, yend = y2), linetype = "dotted",  colour = "#000080", size= 1, alpha = .5) +
+```{r}
+line1 = data.frame(x1 = .365, x2 = .4, y1 = .7, y2 = .8)
+```
+target = c("ADAMS", "ARAPAHOE", "BOULDER", "BROOMFIELD", "DENVER", "DOUGLAS", "JEFFERSON")
+
+## Combine with inset map
+```{r fig.height=4, fig.width=6}
+fig1 = ggdraw() +
+   draw_plot(map2) +
+  geom_segment(data =line1, aes(x = x1, y = y1, xend = x2, yend = y2),   colour = "black", size= 1) +
+  draw_plot(map1, x = 0.6, y = 0.1, width = .25, height = .25) +
+  draw_label("Adams", x = .65, y = .66, fontfamily = "sans", fontface = "bold", color = "white", size = 8) +
+  draw_label("Arapahoe", x = .65, y = .46, fontfamily = "sans", fontface = "bold", color = "white", size = 8) +
+  draw_label("Boulder", x = .20, y = .85, fontfamily = "sans", fontface = "bold", color = "white", size = 8) +
+  draw_label("Broomfield", x = .415, y = .815, fontfamily = "sans", fontface = "bold", color = "black", size = 8) +
+  draw_label("Denver", x = .395, y = .55, fontfamily = "sans", fontface = "bold", color = "white", size = 8) +
+  draw_label("Douglas",  x = .4, y = .3, fontfamily = "sans", fontface = "bold", color = "white", size = 8) +
+  draw_label("Jefferson", x = .28, y = .5, fontfamily = "sans", fontface = "bold", color = "white", size = 8) 
+ 
+fig1
+```
+
+```{r}
+ggsave("../figures/COStudyArea.png", plot = fig1, width = 6, height = 4, units= "in", dpi = 600)
+```

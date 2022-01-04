@@ -1,0 +1,69 @@
+---
+title: "Select Counties"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+Select Counties
+
+
+# Packages
+```{r message=FALSE, warning=FALSE}
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(DT)
+library(sf)
+library(ggmap) # devtools::install_github("dkahle/ggmap")
+library(ggrepel)
+library(RStoolbox)
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(RColorBrewer)
+library(cowplot)
+library(ggspatial)
+library(maps)
+library(maptools)
+library(rgeos)
+library(sp)
+library(mapproj)
+```
+
+## Shapefiles
+```{r}
+cnty = st_read("../data/CountiesColorado/geo_export_0157f156-9909-4840-9dbd-5977cc5588c1.shp", "geo_export_0157f156-9909-4840-9dbd-5977cc5588c1") 
+```
+
+```{r}
+plot(st_geometry(cnty))
+```
+
+```{r}
+head(cnty)
+```
+
+```{r}
+target = c("ADAMS", "ARAPAHOE", "BOULDER", "BROOMFIELD", "DENVER", "DOUGLAS", "JEFFERSON")
+```
+
+```{r}
+select_cnty = cnty %>% filter(county %in% target)
+```
+
+```{r}
+plot(st_geometry(select_cnty))
+```
+```{r}
+st_crs(select_cnty)
+```
+
+# Write to shapefile
+```{r eval=FALSE, include=FALSE}
+st_write(select_cnty, "../outputs/County/SelectCounty.shp", driver="ESRI Shapefile") 
+```
