@@ -37,3 +37,12 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+
+# exclude specific folders from push to github
+figures/*
+files/*
+data/*
+figs/*
+outputs/*
