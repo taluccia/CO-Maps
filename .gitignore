@@ -46,5 +46,5 @@ vignettes/*.pdf
 figures/*
 files/*
 data/*
-figs/*
+
 outputs/*
